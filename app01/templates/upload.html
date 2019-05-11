@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}上传商品{% endblock %}
+
+{% block content %}
+<div class="content">
+	<a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a>
+	<div class="upload_content">
+		
+		<p>请在时间一栏输入“YYYY-MM-DD”</p>
+		<form method="post" action="" id="upload" enctype="multipart/form-data">
+			{% for field in uploadform %}
+				<div class="fieldWrapper" style="margin-bottom:10px;">
+					{{ field.errors }}
+					<div class="label" style="color:#444">{{ field.label }}： </div>
+					<div class="input_field">{{ field }}</div>
+				</div>
+			{% endfor %}
+			<input class="upload_button" type="submit" value="Upload">
+		</form>
+	</div>
+</div>
+{% endblock %}

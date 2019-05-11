@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}购物车{% endblock %}
+
+{% block content %}
+	<div class="content">
+		<a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a>
+		<h1 class="cart-title">{{owner}}的购物车</h1>
+		<br>
+			<div class="cart-info">
+				<table>
+					<thead>
+						<tr>
+							<td class="image">Image</td>
+							<td class="name">Product Name</td>
+							<td class="unit_price">Unit Price</td>
+							<td class="quantity">Quantity</td>
+							<td class="buy">Check</td>
+							<td class="remove">Remove</td>
+						</tr>
+					</thead>
+					<tbody>
+						{% for product in products_list %}
+						<tr>
+							<td class="image"><a href="{% url 'app01:product' product.id %}"><img src="{{product.img.url}}" alt="iMac" title="iMac" /></a></td>
+							<td>{{product.name}}</td>
+							<td>{{product.price}}</td>
+							<form method="post" action="{% url 'app01:create_order' product.id %}">
+								<!--/account/cart/{{product.id}}/create_order/-->
+								<td><input type="number" value="{{product.buy_quantity}}" name="buy_quantity" max="{{product.remained}}"style="width:50px;"></td>
+								{% if product.remained >= product.buy_quantity %}
+									{% if product.is_exist == True %}
+									<td class="buy"><input type="submit" value="购买"></td>
+									{% endif %}
+									{% if product.is_exist == False %}
+									<td class="buy"><input type="submit" value="商品已下架" disabled="disabled"></td>
+									{% endif %}
+								{% else %}
+									<td class="buy"><input type="submit" value="库存不足" disabled="disabled"></td>
+								{% endif %}
+							</form>
+							<form method="post" action="{% url 'app01:delete_cart_item' product.id %}">
+								<!--/account/delete_cart_item/{{product.id}}-->
+								<td class="remove"><input type="submit" name="{{product.id}}" value="删除"></td>
+							</form>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		
+
+		<div class="buttons">
+			<form method="post" action="{% url 'app01:clear_cart'%}">
+				<div class="right"><button href="#" type="submit" class="button" style="width:120px;"><span>清空购物车</span></div>
+			</form>
+		
+		</div>
+
+		</div>
+	</div>
+{% endblock %}
+
+<!--images/imac_1-80x80.jpg-->
+<!--/product/{{product.id}}-->

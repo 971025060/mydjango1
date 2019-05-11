@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}我上传的物品{% endblock %}
+
+{% block content %}
+	<div class="content">
+		<a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a>
+		<h1>我上传的物品</h1>
+		<form method="post" action="/account/delete_product/">
+			<div class="cart-info">
+				<table>
+					<thead>
+						<tr>
+							<td class="remove">Remove</td>
+							<td class="id">Product Image</a></td>
+							<td class="name">Product Name</a></td>
+							<td class="quantity">Quantity</td>
+							<td class="price">Unit Price</td>
+							<td class="time">Upload Time</td>
+						</tr>
+					</thead>
+					<tbody>
+						{% for product in products_list %}
+							{% if product.is_exist == True %}
+							<tr>
+								<td><input type="checkbox" value="{{product.id}}" name="check_box_list" /></td>
+								<td><a href="/product/{{product.id}}"><img src="{{product.img.url}}"></a></td>
+								<td>{{product.name}}</td>
+								<td>{{product.remained}}</td>
+								<td>{{product.price}}</td>
+								<td>{{product.time}}</td>
+							</tr>
+							{% endif %}
+						{% endfor %}
+					</tbody>
+				</table>
+				<input class="delete_button" type="submit" value="确认删除">
+				<a href="/../account/upload"><input class="delete_button" value="继续上传" type="button" style="margin-right:10px;"></a>
+			</div>
+		</form>
+	</div>
+{% endblock %}

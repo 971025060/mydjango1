@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人脸识别</title>
+</head>
+<body>
+// 身份认证标志及名字
+      var IdentifyNo1 = false;
+      var IdentifyNo2 = false;
+      var AuthNameNo1 ='';
+      var AuthNameNo2 ='';
+
+      // 计时器
+      var timeout;
+    $(document).ready(function () {
+        // 按钮 身份验证
+        $("#CheckNo1").click(function () {
+        var video = document.getElementById('video');
+        var canvas = document.getElementById('canvasL');
+
+        var context = canvas.getContext('2d');
+        context.drawImage(video,0,0,canvas.width,canvas.height);
+        var LeftImage = canvas.toDataURL("image/png");
+        var ID = 0;
+        // 利用Ajax 技术，将登陆界面人脸图片base64编码格式的图片传至后台
+        $.ajax ({
+            type:"POST",
+            url:"account/cart/(\d*)/face_recognition/",
+            //必须添加 csrf_token
+            beforeSend:function (xhr,setting) {
+                xhr.setRequestHeader("X-CSRFToken","{{ csrf_token }}");
+            },
+            dataType:'json',
+            data:{
+                "id":ID,
+                "faceImg":LeftImage
+            },
+            success:function (displayList) {
+                // 处理认证后的数据
+                if (displayList.canLogin === true){
+                    $('#DisplayNo1').text("验证成功: "+displayList.AuthName).removeClass("label-danger").addClass("" +
+                        "label-success");
+
+                     IdentifyNo1 = true;
+                     AuthNameNo1 = displayList.AuthName;
+
+                     if (IdentifyNo2 === true){
+                         clearTimeout(timeout);
+                     }
+                     else{
+                         // 开始计数，10s内，另一个如果没完成则验证失败
+                         timeout = setTimeout(function () {
+                         $('#DisplayNo1').text("验证失败: 超时").removeClass("label-success").addClass("label-danger");
+                         IdentifyNo1 = false;
+                         AuthNameNo1 = '';
+                     },10000);
+                     }
+
+                    LoginSys(IdentifyNo1 ,AuthNameNo1, IdentifyNo2,AuthNameNo2);
+                }
+                else{
+                    $('#DisplayNo1').text("验证失败: "+displayList.AuthName).removeClass("label-success").addClass("label-danger");
+
+                    IdentifyNo1 = false;
+                    AuthNameNo1 = '';
+                }
+            },
+            error:function () {
+               $('#DisplayNo1').text("验证失败: 未检测到人脸").removeClass("label-success").addClass("label-danger");
+
+                IdentifyNo1 = false;
+                AuthNameNo1 = '';
+            }
+            })
+        });
+</body>
+</html>

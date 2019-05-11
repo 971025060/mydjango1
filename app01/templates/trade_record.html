@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}交易记录{% endblock %}
+
+{% block content %}
+	<div class="content">
+		<a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a>
+		<h1>{{username}}的交易记录</h1>
+		{% if buy_list %}
+		<h2>支出记录</h2>
+		<div class="cart-info">
+			<table>
+				<thead>
+					<tr>
+						<td>卖家</td>
+						<td>购买商品</td>
+
+						<td>交易额</td>
+						<td>交易详情</td>
+					</tr>
+				</thead>
+				<tbody>
+					{% for record in buy_list %}
+					<tr>
+						<td>{{record.seller}}</td>
+						<td>{{record.product}}</td>
+						<td>{{record.amount}}</td>
+						<td><a href="/order_info/{{record.product.id}}/{{record.order.id}}/">详情</a></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+		<h2>您还没有支出记录</h2>
+		{% endif %}
+
+		{% if sell_list %}
+		<h2>收入记录</h2>
+		<div class="cart-info">
+			<table>
+				<thead>
+					<tr>
+						<td>买家</td>
+						<td>购买商品</td>
+						<td>交易额</td>
+						<td>交易详情</td>
+					</tr>
+				</thead>
+				<tbody>
+					{% for record in sell_list %}
+					<tr>
+						<td>{{record.buyer}}</td>
+						<td>{{record.product}}</td>
+						<td>{{record.amount}}</td>
+						<td><a href="/order_info/{{record.product.id}}/{{record.order.id}}/">详情</a></td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+		<h2>您还没有收入记录</h2>
+		{% endif %}
+	</div>
+{% endblock %}

@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}主页{% endblock %}
+
+{% block content %}
+<div class="logo_img1"><img alt="Site Name" src="/static/images/logo21.png" height="150" width="300"></a></div>
+
+ <div class="cart-info">
+			<table>
+				<thead>
+					<tr>
+						<td>Product Image</td>
+						<td>Product Name</td>
+						<td>Seller</td>
+						<td></td>
+					</tr>
+				</thead>
+				<tbody>
+					{% for product in products %}
+						<tr>
+							<td><a href="/product/{{product.id}}"><img src="{{product.img.url}}"></a></td>
+							<td>{{product.name}}</td>
+							<td>{{product.user}}</td>
+							<td><a href="/product/{{product.id}}" >详细信息</a></td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+	</div>
+	<div align="center">
+		<ul class="pagination pull-right">
+    {% if products.has_previous %} <!--如果有前一页-->
+        <a href="./?page=1{{ query_string }}">首页</a><!--链接到首页-->
+        <a href="./?page={{ products.previous_page_number }}{{ query_string }}">上一页</a><!--链接到前一页页码-->
+    {% else %}<!--否则-->
+        <a>首页</a><!--禁用首页按钮-->
+        <a>上一页</a><!--禁用前一页按钮-->
+    {% endif %}
+    {% for page_number in paginator.page_range %}<!--遍历页码范围-->
+        {% if page_number != products.number %}<!--如果页码与当前页页码不相同-->
+            {% if products.number < 5 and page_number < 10 or page_number|add:"9" > paginator.num_pages and page_obj.number|add:"4" > paginator.num_pages or page_number|add:"5" > page_obj.number and page_number|add:"-5" < page_obj.number %}
+                <a href="./?page={{ page_number }}{{ query_string }}">{{ page_number }}</a><!--生成页码并添加链接-->
+            {% endif %}
+        {% else %}
+            <li class="active"><a>{{ page_number }}</a></li><!--否则，呈现激活样式-->
+        {% endif %}
+    {% endfor %}
+    {% if products.has_next %}<!--如果有下一页-->
+        <a href="./?page={{ products.next_page_number }}{{ query_string }}">下一页</a><!--链接到下一页页码-->
+        <a href="./?page={{ paginator.num_pages }}{{ query_string }}">尾页</a><!--链接到尾页-->
+    {% else %}<!--否则-->
+        <a>下一页</a><!--否则禁用下一页按钮-->
+       <a>尾页</a><!--禁用尾页按钮-->
+    {% endif %}
+</ul>
+	</div>
+
+
+
+<div align="center">
+	<input  type="submit" value="扫描商品" onclick="getMedia()" />
+	<video id="video" width="100px" height="100px" autoplay="autoplay"></video>
+	<canvas id="canvas" width="100px" height="100px"></canvas>
+	<input type="submit" value="识别" onclick="takePhoto()" />
+	<input type="submit" value="上传" onclick="saveFile(filename);" />
+</div>
+
+
+
+
+	<script>
+        function getMedia() {
+            let constraints = {
+                video: {width: 100, height: 100},
+                audio: true
+            };
+            //获得video摄像头区域
+            let video = document.getElementById("video");
+            //这里介绍新的方法，返回一个 Promise对象
+            // 这个Promise对象返回成功后的回调函数带一个 MediaStream 对象作为其参数
+            // then()是Promise对象里的方法
+            // then()方法是异步执行，当then()前的方法执行完后再执行then()内部的程序
+            // 避免数据没有获取到
+            let promise = navigator.mediaDevices.getUserMedia(constraints);
+            promise.then(function (MediaStream) {
+                video.srcObject = MediaStream;
+                video.play();
+            });
+        }
+
+      function takePhoto() {
+      //获得Canvas对象
+      let video = document.getElementById("video");
+      let canvas = document.getElementById("canvas");
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, 100, 100);
+      }
+      //下面的代码是保存canvas标签里的图片并且将其按一定的规则重命名
+	var type = 'jpg';
+
+	var _fixType = function(type) {
+    type = type.toLowerCase().replace(/png/i, 'jpeg');
+    var r = type.match(/jpg|jpeg|bmp|gif/)[0];
+    return 'image/' + r;
+};
+/**
+ * @param  {String} filename 文件名
+ */
+	var saveFile = function(filename){
+	//获取canvas标签里的图片内容
+	var imgData = document.getElementById('canvas').toDataURL(type);
+	imgData = imgData.replace(_fixType(type),'image/octet-stream');
+
+    var save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+    save_link.href = imgData;
+    save_link.download = filename;
+
+    var event = document.createEvent('MouseEvents');
+    event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    save_link.dispatchEvent(event);
+};
+
+// 下载后的文件名规则
+	var filename = (new Date()).getTime() + '.' + type;
+
+</script>
+
+{% endblock %}
+
+<!--<html>-->
+<!--<head>-->
+	<!--<link rel="stylesheet" type="text/css" href="/static/css/style.css" />-->
+	<!--<title></title>-->
+<!--</head>-->
+<!--<body>-->
+	<!--&lt;!&ndash;头部菜单&ndash;&gt;-->
+	<!--<div class="menu"> -->
+		<!--<ul>-->
+			<!--<li style="width:0px;"><a></a></li>-->
+			<!--<li class="active"><a href="/index" class="home">主页</a></li>-->
+			<!--<li><a href="/account/my_orders" class="wishlist">订单</a></li>-->
+			<!--<li><a href="/account" class="account">我的资料</a></li>-->
+			<!--<li><a href="/account/cart" class="cart">购物车</a></li>-->
+			<!--{% if username %}-->
+			<!--<li style="float:right;"><a href="/logout">退出</a></li>-->
+			<!--<li style="float:right;">welcome, {{username}}</li>-->
+				<!--{% else %}-->
+				<!--<li style="float:right;"><a href="/login" class="login">登录</a></li>-->
+				<!--<li style="float:right;"><a href="/regist" class="register">注册</a></li>-->
+			<!--{% endif %}-->
+			<!---->
+		<!--</ul>-->
+	<!--</div>-->
+
+	<!--<div class="logo_img1"><img alt="Site Name" src="/static/images/logo.png" height="150" width="450"></a></div>-->
+
+	<!--<form method="post" action="{% url 'app01:search'%}">-->
+
+    	<!--<input class="search-input1" type="text" name="pro_name" placeholder="我想要……">-->
+		<!--<input class="search-button1" type="submit" value="搜一下">-->
+
+	<!--</form>-->
+
+	<!--<div class="cart-info">-->
+			<!--<table>-->
+				<!--<thead>-->
+					<!--<tr>-->
+						<!--<td>Product Image</td>-->
+						<!--<td>Product Name</td>-->
+						<!--<td>Seller</td>-->
+						<!--<td></td>-->
+					<!--</tr>-->
+				<!--</thead>-->
+				<!--<tbody>-->
+					<!--{% for product in products %}-->
+						<!--<tr>-->
+							<!--<td><a href="/product/{{product.id}}"><img src="{{product.img.url}}"></a></td>-->
+							<!--<td>{{product.name}}</td>-->
+							<!--<td>{{product.user}}</td>-->
+							<!--<td><a href="/product/{{product.id}}" >详细信息</a></td>-->
+						<!--</tr>-->
+					<!--{% endfor %}-->
+				<!--</tbody>-->
+			<!--</table>-->
+	<!--</div>-->
+
+
+	<!--<div align="center">-->
+		<!--<ul class="pagination pull-right">-->
+    <!--{% if products.has_previous %} &lt;!&ndash;如果有前一页&ndash;&gt;-->
+        <!--<a href="./?page=1{{ query_string }}">首页</a>&lt;!&ndash;链接到首页&ndash;&gt;-->
+        <!--<a href="./?page={{ products.previous_page_number }}{{ query_string }}">上一页</a>&lt;!&ndash;链接到前一页页码&ndash;&gt;-->
+    <!--{% else %}&lt;!&ndash;否则&ndash;&gt;-->
+        <!--<a>首页</a>&lt;!&ndash;禁用首页按钮&ndash;&gt;-->
+        <!--<a>上一页</a>&lt;!&ndash;禁用前一页按钮&ndash;&gt;-->
+    <!--{% endif %}-->
+    <!--{% for page_number in paginator.page_range %}&lt;!&ndash;遍历页码范围&ndash;&gt;-->
+        <!--{% if page_number != products.number %}&lt;!&ndash;如果页码与当前页页码不相同&ndash;&gt;-->
+            <!--{% if products.number < 5 and page_number < 10 or page_number|add:"9" > paginator.num_pages and page_obj.number|add:"4" > paginator.num_pages or page_number|add:"5" > page_obj.number and page_number|add:"-5" < page_obj.number %}-->
+                <!--<a href="./?page={{ page_number }}{{ query_string }}">{{ page_number }}</a>&lt;!&ndash;生成页码并添加链接&ndash;&gt;-->
+            <!--{% endif %}-->
+        <!--{% else %}-->
+            <!--<li class="active"><a>{{ page_number }}</a></li>&lt;!&ndash;否则，呈现激活样式&ndash;&gt;-->
+        <!--{% endif %}-->
+    <!--{% endfor %}-->
+    <!--{% if products.has_next %}&lt;!&ndash;如果有下一页&ndash;&gt;-->
+        <!--<a href="./?page={{ products.next_page_number }}{{ query_string }}">下一页</a>&lt;!&ndash;链接到下一页页码&ndash;&gt;-->
+        <!--<a href="./?page={{ paginator.num_pages }}{{ query_string }}">尾页</a>&lt;!&ndash;链接到尾页&ndash;&gt;-->
+    <!--{% else %}&lt;!&ndash;否则&ndash;&gt;-->
+        <!--<a>下一页</a>&lt;!&ndash;否则禁用下一页按钮&ndash;&gt;-->
+       <!--<a>尾页</a>&lt;!&ndash;禁用尾页按钮&ndash;&gt;-->
+    <!--{% endif %}-->
+<!--</ul>-->
+	<!--</div>-->
+
+
+<!--&lt;!&ndash;<div align="center">&ndash;&gt;-->
+	<!--&lt;!&ndash;<form method="post" action="{% url 'app01:search'%}">&ndash;&gt;-->
+		<!--&lt;!&ndash;<input class="search-input1" type="text" name="pro_name" placeholder="我想要……">&ndash;&gt;-->
+		<!--&lt;!&ndash;<ul><input class="search-button1" type="submit" value="扫描商品"></ul>&ndash;&gt;-->
+	<!--&lt;!&ndash;</form>&ndash;&gt;-->
+
+<!--&lt;!&ndash;</div>&ndash;&gt;-->
+
+
+<!--<div align="center">-->
+	<!--<input  type="submit" value="扫描商品" onclick="getMedia()" />-->
+	<!--<video id="video" width="100px" height="100px" autoplay="autoplay"></video>-->
+	<!--<canvas id="canvas" width="100px" height="100px"></canvas>-->
+	<!--<input type="submit" value="识别" onclick="takePhoto()" />-->
+	<!--<input type="submit" value="上传" onclick="saveFile(filename);" />-->
+<!--</div>-->
+
+
+
+
+	<!--<script>-->
+        <!--function getMedia() {-->
+            <!--let constraints = {-->
+                <!--video: {width: 100, height: 100},-->
+                <!--audio: true-->
+            <!--};-->
+            <!--//获得video摄像头区域-->
+            <!--let video = document.getElementById("video");-->
+            <!--//这里介绍新的方法，返回一个 Promise对象-->
+            <!--// 这个Promise对象返回成功后的回调函数带一个 MediaStream 对象作为其参数-->
+            <!--// then()是Promise对象里的方法-->
+            <!--// then()方法是异步执行，当then()前的方法执行完后再执行then()内部的程序-->
+            <!--// 避免数据没有获取到-->
+            <!--let promise = navigator.mediaDevices.getUserMedia(constraints);-->
+            <!--promise.then(function (MediaStream) {-->
+                <!--video.srcObject = MediaStream;-->
+                <!--video.play();-->
+            <!--});-->
+        <!--}-->
+
+      <!--function takePhoto() {-->
+      <!--//获得Canvas对象-->
+      <!--let video = document.getElementById("video");-->
+      <!--let canvas = document.getElementById("canvas");-->
+      <!--let ctx = canvas.getContext('2d');-->
+      <!--ctx.drawImage(video, 0, 0, 100, 100);-->
+      <!--}-->
+      <!--//下面的代码是保存canvas标签里的图片并且将其按一定的规则重命名-->
+	<!--var type = 'jpg';-->
+
+	<!--var _fixType = function(type) {-->
+    <!--type = type.toLowerCase().replace(/png/i, 'jpeg');-->
+    <!--var r = type.match(/jpg|jpeg|bmp|gif/)[0];-->
+    <!--return 'image/' + r;-->
+<!--};-->
+<!--/**-->
+ <!--* @param  {String} filename 文件名-->
+ <!--*/-->
+	<!--var saveFile = function(filename){-->
+	<!--//获取canvas标签里的图片内容-->
+	<!--var imgData = document.getElementById('canvas').toDataURL(type);-->
+	<!--imgData = imgData.replace(_fixType(type),'image/octet-stream');-->
+
+    <!--var save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');-->
+    <!--save_link.href = imgData;-->
+    <!--save_link.download = filename;-->
+
+    <!--var event = document.createEvent('MouseEvents');-->
+    <!--event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);-->
+    <!--save_link.dispatchEvent(event);-->
+<!--};-->
+
+<!--// 下载后的文件名规则-->
+	<!--var filename = (new Date()).getTime() + '.' + type;-->
+
+<!--</script>-->
+
+
+
+<!--</body>-->
+<!--</html>-->

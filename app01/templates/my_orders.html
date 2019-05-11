@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}我的订单{% endblock %}
+
+{% block content %}
+	<div class="content">
+		<a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a>
+		<h1 class="cart-title">{{username}}的订单</h1>
+		<br>
+		<form method="post" action="{%url 'app01:delete_orders'%}">
+			<!--/account/delete_orders/-->
+			<div class="cart-info">
+				<table>
+					<thead>
+						<tr>
+							<td class="remove">Remove</td>
+							<td class="order_id">Order ID</td>
+							<td class="product">Product</td>
+							<td class="order_info">Order Profiles</td>
+						</tr>
+					</thead>
+					<tbody>
+						{% for order in orders %}
+						<tr>
+							<td class="remove"><input type="checkbox" value="{{order.id}}" name="check_box_list" /></td>
+							<td>{{order.id}}</td>
+							<td><a href="/product/{{order.product_id}}">{{order.product_name}}</a></td>
+							<td><a href="/order_info/{{order.product_id}}/{{order.id}}">详情</a></td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+	 		</div>
+		
+
+			<div class="buttons">
+		  		<div class="right"><button type="submit" class="button" style="width:120px;"><span>确认删除</span></div>
+		  		<!-- <div class="center"><button href="#" class="button" style="width:120px;"><span><a href="">继续购物</a></span></div> -->
+			</div>
+		</form>
+	</div>
+{% endblock %}

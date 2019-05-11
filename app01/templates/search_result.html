@@ -1,0 +1,68 @@
+	
+{% extends "base.html" %}
+
+{% block title %}{{product_name}}的搜索结果{% endblock %}
+
+{% block content %}
+	<div class="content">
+		<li><a href="#" onClick="javascript :history.back(-1);" class="return">&raquo;&nbsp;返回上页</a></li>
+		{% if search_status == "Error" %}
+		很抱歉，暂时没有相关商品
+		{% endif %}
+		{% if search_status == "Success" %}
+		<h2>"{{product_name}}"的搜索结果共{{result_len}}条</h2>
+		<div class="cart-info">
+			<table>
+				<thead>
+					<tr>
+						<td>Product Image</td>
+						<td>Product Name</td>
+						<td>Seller</td>
+						<td></td>
+					</tr>
+				</thead>
+				<tbody>
+					{% for product in search_result %}
+						{% if product.is_exist == True %}
+						<tr>
+							<td><a href="/product/{{product.id}}"><img src="{{product.img.url}}"></a></td>
+							<td>{{product.name}}</td>
+							<td>{{product.user}}</td>
+							<td><a href="/product/{{product.id}}" >详细信息</a></td>
+						</tr>
+						{% endif %}
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		<div align="center">
+		<ul class="pagination pull-right">
+    {% if products.has_previous %} <!--如果有前一页-->
+        <a href="./?page=1{{ query_string }}">首页</a><!--链接到首页-->
+        <a href="./?page={{ products.previous_page_number }}{{ query_string }}">上一页</a><!--链接到前一页页码-->
+    {% else %}<!--否则-->
+        <a>首页</a><!--禁用首页按钮-->
+        <a>上一页</a><!--禁用前一页按钮-->
+    {% endif %}
+    {% for page_number in paginator.page_range %}<!--遍历页码范围-->
+        {% if page_number != products.number %}<!--如果页码与当前页页码不相同-->
+            {% if products.number < 5 and page_number < 10 or page_number|add:"9" > paginator.num_pages and page_obj.number|add:"4" > paginator.num_pages or page_number|add:"5" > page_obj.number and page_number|add:"-5" < page_obj.number %}
+                <a href="./?page={{ page_number }}{{ query_string }}">{{ page_number }}</a><!--生成页码并添加链接-->
+            {% endif %}
+        {% else %}
+            <li class="active"><a>{{ page_number }}</a></li><!--否则，呈现激活样式-->
+        {% endif %}
+    {% endfor %}
+    {% if products.has_next %}<!--如果有下一页-->
+        <a href="./?page={{ products.next_page_number }}{{ query_string }}">下一页</a><!--链接到下一页页码-->
+        <a href="./?page={{ paginator.num_pages }}{{ query_string }}">尾页</a><!--链接到尾页-->
+    {% else %}<!--否则-->
+        <a>下一页</a><!--否则禁用下一页按钮-->
+       <a>尾页</a><!--禁用尾页按钮-->
+    {% endif %}
+</ul>
+	</div>
+		{% endif %}
+
+	</div>
+{% endblock %}
