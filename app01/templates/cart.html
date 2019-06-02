@@ -25,20 +25,25 @@
 							<td class="image"><a href="{% url 'app01:product' product.id %}"><img src="{{product.img.url}}" alt="iMac" title="iMac" /></a></td>
 							<td>{{product.name}}</td>
 							<td>{{product.price}}</td>
-							<form method="post" action="{% url 'app01:create_order' product.id %}">
-								<!--/account/cart/{{product.id}}/create_order/-->
+							<!--<form method="post" action="{% url 'app01:create_order' product.id %}">-->
+								<!--&lt;!&ndash;/account/cart/{{product.id}}/create_order/&ndash;&gt;-->
+								<!--<td><input type="number" value="{{product.buy_quantity}}" name="buy_quantity" max="{{product.remained}}"style="width:50px;"></td>-->
+								<!--{% if product.remained >= product.buy_quantity %}-->
+									<!--{% if product.is_exist == True %}-->
+									<!--<td class="buy"><input type="submit" value="购买"></td>-->
+									<!--{% endif %}-->
+									<!--{% if product.is_exist == False %}-->
+									<!--<td class="buy"><input type="submit" value="商品已下架" disabled="disabled"></td>-->
+									<!--{% endif %}-->
+								<!--{% else %}-->
+									<!--<td class="buy"><input type="submit" value="库存不足" disabled="disabled"></td>-->
+								<!--{% endif %}-->
+							<!--</form>-->
+							<form method="post" action="{% url 'app01:face' product.id  %}">
 								<td><input type="number" value="{{product.buy_quantity}}" name="buy_quantity" max="{{product.remained}}"style="width:50px;"></td>
-								{% if product.remained >= product.buy_quantity %}
-									{% if product.is_exist == True %}
-									<td class="buy"><input type="submit" value="购买"></td>
-									{% endif %}
-									{% if product.is_exist == False %}
-									<td class="buy"><input type="submit" value="商品已下架" disabled="disabled"></td>
-									{% endif %}
-								{% else %}
-									<td class="buy"><input type="submit" value="库存不足" disabled="disabled"></td>
-								{% endif %}
+								<td class="buy"><input type="submit" value="购买"></td>
 							</form>
+							<!--<td><a href="{% url 'app01:face_recognition'  %}" >详细信息</a></td>-->
 							<form method="post" action="{% url 'app01:delete_cart_item' product.id %}">
 								<!--/account/delete_cart_item/{{product.id}}-->
 								<td class="remove"><input type="submit" name="{{product.id}}" value="删除"></td>
@@ -54,7 +59,7 @@
 			<form method="post" action="{% url 'app01:clear_cart'%}">
 				<div class="right"><button href="#" type="submit" class="button" style="width:120px;"><span>清空购物车</span></div>
 			</form>
-		
+
 		</div>
 
 		</div>

@@ -25,23 +25,24 @@ urlpatterns = [
 
     url(r'^account/cart/(\d*)/create_order/$',views.create_order,name='create_order'),   #创建订单
     url(r'^order_info/(\d*)/(\d*)/$',views.order_info,name='order_info'),             #显示订单详情
-    url(r'^account/cart/face_recognition/$',views.face_recognition,name='face_recognition'),#人脸验证
+    url(r'^face/(\d*)/$',views.face,name='face'),#人脸截取
+
+    url(r'^face_recognition/$',views.face_recognition,name='face_recognition'),#人脸验证
     url(r'^account/my_orders/$',views.show_orders,name='my_orders'),               #显示订单
     url(r'^account/delete_orders/$',views.delete_orders,name='delete_orders'),           #删除订单
 
-    #url(r'^account/change_name/$',views.change_username),   #修改用户名
-    #url(r'^account/change_email/$',views.change_email),    #修改邮箱
     url(r'^account/change_password/$',views.show_change_password,name='change_password'),  #修改密码页面
     url(r'^account/changepassword/$',views.change_password,name='changepassword'),        #修改密码
     url(r'^account/trading_record/$',views.show_transaction,name='trading_record'),       #显示交易记录
     url(r'^search_result/$',views.search,name='search'),      #搜索
 
     url(r'^account/recharge/$',views.recharge,name='recharge'),     #充值
-    
+
+    url(r'^model/(\d*)/$', views.model, name='model'),
     url(r'^$',views.index),
 
-    url(r'^scan/$',views.scan,name='scan'),   #摄像头
-    # url(r'^view/$', views.view),
+
+
 
 
 

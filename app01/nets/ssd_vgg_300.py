@@ -176,7 +176,7 @@ class SSDNet(object):
         """
         shapes = ssd_feat_shapes_from_net(predictions, self.params.feat_shapes)
         self.params = self.params._replace(feat_shapes=shapes)
-
+    # SSD框的生成
     def anchors(self, img_shape, dtype=np.float32):
         """Compute the default anchor boxes, given an image shape.
         """
@@ -229,7 +229,7 @@ class SSDNet(object):
         if clipping_bbox is not None:
             rbboxes = tfe.bboxes_clip(clipping_bbox, rbboxes)
         return rscores, rbboxes
-
+    # ssd损失函数
     def losses(self, logits, localisations,
                gclasses, glocalisations, gscores,
                match_threshold=0.5,
@@ -447,6 +447,7 @@ def ssd_net(inputs,
 
     # End_points collect relevant activations for external use.
     end_points = {}
+    # 网络结构
     with tf.variable_scope(scope, 'ssd_300_vgg', [inputs], reuse=reuse):
         # Original VGG-16 blocks.
         net = slim.repeat(inputs, 2, slim.conv2d, 64, [3, 3], scope='conv1')

@@ -11,6 +11,7 @@ class User(models.Model):
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=50)
     email = models.EmailField()
+    img = models.ImageField('图片', upload_to='img', default="")
     money = models.DecimalField(max_digits=9, decimal_places=2, default="0")
     is_changed = models.BooleanField(default=True)
     def __unicode__(self):

@@ -11,7 +11,7 @@ slim = tf.contrib.slim
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import sys
-from app01 import recongnite
+# from app01 import recongnite
 sys.path.append('../')
 from app01.nets import ssd_vgg_300, ssd_common, np_methods
 from app01.preprocessing import ssd_vgg_preprocessing
@@ -112,7 +112,6 @@ for path in paths:
 # 文件夹中的第几张图，-1代表最后一张
 #img = mpimg.imread(path + image_names[61])
     rclasses, rscores, rbboxes = process_image(img)
-    recongnite.getClasses(rclasses)
     print("----类别为----:", rclasses)
 # visualization.bboxes_draw_on_img(img, rclasses, rscores, rbboxes, visualization.colors_plasma)
     visualization.plt_bboxes(img, rclasses, rscores, rbboxes)

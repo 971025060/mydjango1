@@ -7,7 +7,10 @@ from django.shortcuts import render,render_to_response
 from django.http import HttpResponse,HttpResponseRedirect
 from django.template import RequestContext
 from django import forms
-
+import sys
+import ssl
+from urllib import request, parse
+import json
 
 from .models import User, Product, Cart, Order, Coin, Transaction
 from PIL import Image
@@ -18,7 +21,11 @@ class UserForm(forms.Form):
 	username = forms.CharField(label='用户名',max_length=50)
 	password = forms.CharField(label='密__码',widget=forms.PasswordInput())
 	email = forms.EmailField(label='邮__箱')
-
+	img = forms.ImageField(label='图__片')
+class LoginForm(forms.Form):
+	username = forms.CharField(label='用户名',max_length=50)
+	password = forms.CharField(label='密__码',widget=forms.PasswordInput())
+	# email = forms.EmailField(label='邮__箱')
 class UploadForm(forms.Form):
 	name = forms.CharField(label='名称', max_length=50)
 	old_time = forms.DateField(label='原购买时间')
@@ -32,20 +39,23 @@ class UploadForm(forms.Form):
 #注册
 def regist(request):
 	if request.method == 'POST':
-		userform = UserForm(request.POST)
+		userform = UserForm(request.POST,request.FILES)
 		if userform.is_valid():
 			username = userform.cleaned_data['username']
 			password = userform.cleaned_data['password']
 			email = userform.cleaned_data['email']
+			img = userform.cleaned_data['img']
 
 			user1 = User.objects.filter(username__exact=request.POST['username'])
 			user2 = User.objects.filter(email__exact=request.POST['email'])
-			if user1 or user2:
-				status = '用户名/邮箱已存在'
+			if user1 :
+				status = '用户名已存在'
 				return render_to_response('regist.html', {'userform':userform, 'status':status})
-
+			elif user2:
+				status = '邮箱已被注册'
+				return render_to_response('regist.html', {'userform': userform, 'status': status})
 			else:
-				new_user = User(username=username,password=password,email=email,money=0)
+				new_user = User(username=username,password=password,email=email,money=0,img=img)
 				new_user.save()
 				coin = Coin(owner=new_user, amount=0)
 				coin.save()
@@ -63,13 +73,13 @@ def regist(request):
 #登录
 def login(request):
 	if request.method == 'POST':
-		userform = UserForm(request.POST)
+		userform = LoginForm(request.POST)
 		if userform.is_valid():
 			username = userform.cleaned_data['username']
 			password = userform.cleaned_data['password']
-			email = userform.cleaned_data['email']
-			user = User.objects.filter(username__exact=username,password__exact=password, 
-				email__exact=email)
+			# email = userform.cleaned_data['email']
+			user = User.objects.filter(username__exact=username,password__exact=password )
+				# email__exact=email
 			
 			if user:
 				request.session['username'] = username
@@ -81,17 +91,19 @@ def login(request):
 				return HttpResponseRedirect(R_url, {'userform':userform})
 
 			else:
-				status="用户名/邮箱/密码错误"
-				return render_to_response('login.html', {'userform':userform,'status':status})
+				status="用户名/密码错误"
+				return render_to_response(	'login.html', {'userform': userform, 'status': status})
 
 	else:
-		userform = UserForm()
+		userform = LoginForm()
 	return render_to_response('login.html',{'userform':userform})
 
 #登陆后主页显示
 def index(request):
 	username = request.session.get('username')
-	product_list = Product.objects.filter(is_exist = 1)
+	#product_list = Product.objects.filter(is_exist = 1)#查询存在的商品
+
+	product_list = Product.objects.all()
 	paginator = Paginator(product_list,3)
 	page = request.GET.get('page')
 	try:
@@ -241,82 +253,96 @@ def show_cart(request):
 			cart.save()
 			cart.owner.add(owner)
 			products_list = cart.products.all()
-		return render_to_response('cart.html', {'cart':cart, 'owner':owner, 
+		return render_to_response('cart.html', {'cart':cart, 'owner':owner,
 			'products_list':products_list, 'username':username})
 	else:
 		userform = UserForm(request.POST)
 		return HttpResponseRedirect('/login/?next=/account/cart/', {'userform':userform})
 
-#订单信息
+#创建订单信息
 def create_order(request, product_id):
-	username = request.session.get('username')
-	if username:
-		owner = User.objects.get(username__exact=username)
-		cart = Cart.objects.get(owner=owner)
-		product = Product.objects.get(id=product_id)
-		order= Product.objects.get(id=product_id)
-		if request.method == 'POST':
-			if product.is_exist == True:
-				buy_quantity = request.POST.get("buy_quantity")
-				product.buy_quantity = int(buy_quantity)
-				
-				product.save()
+	score = face_recognition(request)
+	if score > 80:
+		username = request.session.get('username')
+		if username:
+			owner = User.objects.get(username__exact=username)
+			cart = Cart.objects.get(owner=owner)
+			product = Product.objects.get(id=product_id)
+			print("创建订单时的购买数量为:")
+			print(product.buy_quantity)
+			order= Product.objects.get(id=product_id)
+		# if request.method == 'POST':
+		# 	if product.is_exist == True:
+		# 		buy_quantity = request.POST.get("buy_quantity")
+		# 		product.buy_quantity = int(buy_quantity)
+		#
+		# 		product.save()
 
-				total = product.buy_quantity*product.price
-				return render_to_response('create_order.html', {'cart':cart, 'owner':owner, 'order':order,
+			total = product.buy_quantity*product.price
+			print("总价为u:")
+			print(total)
+			return render_to_response('create_order.html', {'cart':cart, 'owner':owner, 'order':order,
 					'total':total, 'product':product, 'username':username})
-			else:
-				return render_to_response('create_order.html', {'cart':cart, 'owner':owner, 
-					'order':order, 'product':product, 'username':username})
+			# else:
+			# 	return render_to_response('create_order.html', {'cart':cart, 'owner':owner,
+			# 		'order':order, 'product':product, 'username':username})
+		else:
+			userform = UserForm(request.POST)
+			return HttpResponseRedirect('/login', {'userform':userform})
 	else:
-		userform = UserForm(request.POST)
-		return HttpResponseRedirect('/login', {'userform':userform})
+		return render_to_response('validate.html')
 
 #订单提交
 def order_info(request, product_id, order_id):
-	username = request.session.get('username')
-	if username:
-		owner = User.objects.get(username__exact=username)
-		cart = Cart.objects.get(owner=owner)
-		product = Product.objects.get(id=product_id)
-		if request.method == 'POST':
-			phone = request.POST.get("phone")
-			address = request.POST.get("address")
-			remarks = request.POST.get("remarks")
-			order = Order(product_name=product.name, product_id=product.id, 
-				user=owner, product_amount=product.buy_quantity, phone=phone,
-				address=address, remarks=remarks)
-			order.save()
 
-			cart.products.remove(product)
-			order.products.add(product)
-			order.save()
-			cart.save()
+		username = request.session.get('username')
+		if username:
+			owner = User.objects.get(username__exact=username)
+			cart = Cart.objects.get(owner=owner)
+			product = Product.objects.get(id=product_id)
+			if request.method == 'POST':
+				phone = request.POST.get("phone")
+				address = request.POST.get("address")
 
-			total = product.buy_quantity*product.price
+				remarks = request.POST.get("remarks")
+				order = Order(product_name=product.name, product_id=product.id,
+							  user=owner, product_amount=product.buy_quantity, phone=phone,
+							  address=address, remarks=remarks)
 
-			p_owner = product.user
-			owner.money = int(owner.money) - int(total)
-			p_owner.money = int(p_owner.money) + int(total)
-			p_owner.save()
-			owner.save()
-			product.remained = product.remained - product.buy_quantity
-			product.save()
-			transaction = Transaction(seller=p_owner, buyer=owner, 
-				product=product, amount=total, order=order)
-			transaction.save()
-			status = "提交成功！"
+				order.save()
 
-			return render_to_response('order_info.html', {'order':order, 'status':status,
-				'username':username, 'product':product, 'total':total})
+
+				cart.products.remove(product)
+				order.products.add(product)
+				order.save()
+				cart.save()
+
+				total = product.buy_quantity * product.price
+
+				p_owner = product.user
+				owner.money = int(owner.money) - int(total)
+				p_owner.money = int(p_owner.money) + int(total)
+				p_owner.save()
+				owner.save()
+				product.remained = product.remained - product.buy_quantity
+				product.save()
+				transaction = Transaction(seller=p_owner, buyer=owner,
+										  product=product, amount=total, order=order)
+				transaction.save()
+				status = "提交成功！"
+
+				return render_to_response('order_info.html', {'order': order, 'status': status,
+															  'username': username, 'product': product, 'total': total})
+			else:
+				order = Order.objects.get(id=order_id)
+				total = product.buy_quantity * product.price
+				return render_to_response('order_info.html', {'order': order,
+															  'username': username, 'product': product, 'total': total})
 		else:
-			order = Order.objects.get(id=order_id)
-			total = product.buy_quantity*product.price
-			return render_to_response('order_info.html', {'order':order, 
-				'username':username, 'product':product, 'total':total})
-	else:
-		userform = UserForm(request.POST)
-		return HttpResponseRedirect('/login', {'userform':userform})
+			userform = UserForm(request.POST)
+			return HttpResponseRedirect('/login', {'userform': userform})
+
+
 
 #我的订单
 def show_orders(request):
@@ -529,85 +555,98 @@ def recharge(request):
 		userform = UserForm(request.POST)
 		return HttpResponseRedirect('/login', {'userform':userform})
 
-#from .recongnite import cameraAutoForPictures
-def scan(request):
-	
-	return HttpResponseRedirect('/search_result')
 
-def getClasses(classes):
-	print ('___class___',classes)
-	return classes
+
+def face(request,product_id):
+	username = request.session.get('username')
+	if username:
+			product = Product.objects.get(id=product_id)
+			print("结果为:")
+			print(product.name)
+			if request.method == 'POST':
+				if product.is_exist == True:
+					buy_quantity = request.POST.get("buy_quantity")
+					product.buy_quantity = int(buy_quantity)
+					product.save()
+					print("保存后的购买数量为:")
+					print(product.buy_quantity)
+			return render_to_response("face_recognition.html",{'product':product,'username':username})
+	else:
+			userform = UserForm(request.POST)
+			return HttpResponseRedirect('/login', {'userform':userform})
+
 
 def face_recognition(request):
-	## 人脸登陆验证
-
-	# if request.method == "POST" and request.is_ajax():
-	# 	# 获取base64格式的图片
-	# 	faceImage = request.POST.get('faceImg')
-	# 	# 提取出base64格式，并进行转换为图片
-	# 	index = faceImage.find('base64,')
-	# 	base64Str = faceImage[index + 6:]
-	# 	img = base64.b64decode(base64Str)
-	# 	# 将文件保存
-	# 	backupDate = time.strftime("%Y%m%d_%H%M%S")
-	# 	if int(request.POST.get('id')) == 0:
-	# 		fileName = MEDIA_ROOT + "LeftImg_%s.jpg" % (backupDate)
-	# 	else:
-	# 		fileName = MEDIA_ROOT + "RightImg_%s.jpg" % (backupDate)
-	# 	file = open(fileName, 'wb')
-	# 	file.write(img)
-	# 	file.close()
-	# 	# 删除多余的图片
-	# 	filesLeft = os.listdir(BASE_LOGIN_LEFT_PATH)
-	# 	filesLeft.sort()
-	# 	leftImgCount = filesLeft.__len__()
-	# 	filesRight = os.listdir(BASE_LOGIN_RIGHT_PATH)
-	# 	filesRight.sort()
-	# 	RightImgCount = filesRight.__len__()
-	#
-	# 	if leftImgCount > 100:
-	# 		# 图片超过100个，删除一个
-	# 		os.unlink(BASE_LOGIN_LEFT_PATH + filesLeft[0])
-	# 	if RightImgCount > 100:
-	# 		# 图片超过100个，删除一个
-	# 		os.unlink(BASE_LOGIN_RIGHT_PATH + filesRight[0])
-	#
-	# 	# 对图片进行人脸识别比对
-	# 	canLogin = False
-	# 	AuthName = "未授权用户"
-	#
-	# 	# 1> 加载相机刚拍摄的人脸
-	# 	unknown_face = face_recognition.load_image_file(fileName)
-	# 	unknown_face_tmp_encoding = []
-	# 	try:
-	# 		unknown_face_tmp_encoding = face_recognition.face_encodings(unknown_face)[0]
-	# 	except IndexError:
-	# 		canLogin = False  # 图片中未发现人脸
-	#
-	# 	# 2> 进行比对
-	#
-	# 	### 第一种方法
-	# 	# results = face_recognition.face_distance(known_face,unknown_face_tmp_encoding)
-	# 	# 小于0.6即对比成功。但是效果不好，因此我们设置阈值为0.4,
-	# 	# for i, face_distance in enumerate(results):
-	# 	#     if face_distance <= 0.4:
-	# 	#         canLogin = True
-	# 	#         AuthName = os.listdir(BASE_LOGIN_AUTH_PATH)[i][:-4]
-	#
-	# 	### 第二中方法
-	# 	results1 = face_recognition.compare_faces(known_face, unknown_face_tmp_encoding, 0.4)
-	# 	for i, face_distance in enumerate(results1):
-	# 		if face_distance == True:
-	# 			canLogin = True
-	# 			AuthName = os.listdir(BASE_LOGIN_AUTH_PATH)[i][:-4]
-	#
-	# 	JsonBackInfo = {
-	# 		"canLogin": canLogin,
-	# 		"AuthName": AuthName
-	# 	}
-	#
-	# 	return JsonResponse(JsonBackInfo)
-	return  HttpResponse('face_recognition.html')
+	username = request.session.get('username')
+	user = User.objects.get(username__exact=username)
+	Image = str(user.img)
+	print(Image)
+	file1path = 'D:/Workspace/DjangoProject/mydjango1/app01/media/img/1.jpg'
+	file2path = 'D:/Workspace/DjangoProject/mydjango1/app01/media/img/2.jpg'
+	res = img(file1path, file2path)
+	print(res)
+	return res
 
 
+# client_id 为官网获取的AK， client_secret 为官网获取的SK
+# 获取token
+def get_token():
+    client_id = '0S3RvVBtBy54khGGGV3CFQwX'
+    client_secret = 'UqoHPvZLczS66YHYpEx3EDgVlLZgmSUb'
+    context = ssl._create_unverified_context()
+    host = 'https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=%s&client_secret=%s'%(client_id, client_secret)
+    req = request.Request(host)
+    req.add_header('Content-Type', 'application/json; charset=UTF-8')
+    response = request.urlopen(req,context=context)
+    # 获得请求结果
+    content = response.read()
+    # 结果转化为字符
+    content = bytes.decode(content)
+    # 转化为字典
+    content = eval(content[:-1])
+    print(content)
+    return content['access_token']
 
+# 转换图片
+# 读取文件内容，转换为base64编码
+# 二进制方式打开图文件
+def imgdata(file1path, file2path):
+    import base64
+    f = open(r'%s' % file1path, 'rb')
+    pic1 = base64.b64encode(f.read())
+    f.close()
+    f = open(r'%s' % file2path, 'rb')
+    pic2 = base64.b64encode(f.read())
+    f.close()
+    # 将图片信息格式化为可提交信息，这里需要注意str参数设置
+    params = json.dumps(
+        [{"image": str(pic1, 'utf-8'), "image_type": "BASE64", "face_type": "LIVE", "quality_control": "LOW"},
+         {"image": str(pic2, 'utf-8'), "image_type": "BASE64", "face_type": "IDCARD", "quality_control": "LOW"}]
+    )
+    return params.encode(encoding='UTF8')
+
+
+# 提交进行对比获得结果
+def img(file1path, file2path):
+    token = get_token()
+
+    print(token)
+    # 人脸识别API
+    # url = 'https://aip.baidubce.com/rest/2.0/face/v2/detect?access_token='+token
+    # 人脸对比API
+    context = ssl._create_unverified_context()
+    url = 'https://aip.baidubce.com/rest/2.0/face/v3/match?access_token=' + token
+    params = imgdata(file1path, file2path)
+    req = request.Request(url= url, data=params)
+    req.add_header('Content-Type', 'application/json')
+    response = request.urlopen(req,context=context)
+    content = response.read()
+    print(content)
+    content = eval(content)
+    # 获得分数
+    score = content['result']['score']
+    return score
+
+
+def model(request):
+	pass

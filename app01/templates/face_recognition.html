@@ -1,78 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>人脸识别</title>
-</head>
-<body>
-// 身份认证标志及名字
-      var IdentifyNo1 = false;
-      var IdentifyNo2 = false;
-      var AuthNameNo1 ='';
-      var AuthNameNo2 ='';
+{% extends "base.html" %}
 
-      // 计时器
-      var timeout;
-    $(document).ready(function () {
-        // 按钮 身份验证
-        $("#CheckNo1").click(function () {
-        var video = document.getElementById('video');
-        var canvas = document.getElementById('canvasL');
+{% block title %}人脸验证{% endblock %}
 
-        var context = canvas.getContext('2d');
-        context.drawImage(video,0,0,canvas.width,canvas.height);
-        var LeftImage = canvas.toDataURL("image/png");
-        var ID = 0;
-        // 利用Ajax 技术，将登陆界面人脸图片base64编码格式的图片传至后台
-        $.ajax ({
-            type:"POST",
-            url:"account/cart/(\d*)/face_recognition/",
-            //必须添加 csrf_token
-            beforeSend:function (xhr,setting) {
-                xhr.setRequestHeader("X-CSRFToken","{{ csrf_token }}");
-            },
-            dataType:'json',
-            data:{
-                "id":ID,
-                "faceImg":LeftImage
-            },
-            success:function (displayList) {
-                // 处理认证后的数据
-                if (displayList.canLogin === true){
-                    $('#DisplayNo1').text("验证成功: "+displayList.AuthName).removeClass("label-danger").addClass("" +
-                        "label-success");
+{% block content %}
 
-                     IdentifyNo1 = true;
-                     AuthNameNo1 = displayList.AuthName;
 
-                     if (IdentifyNo2 === true){
-                         clearTimeout(timeout);
-                     }
-                     else{
-                         // 开始计数，10s内，另一个如果没完成则验证失败
-                         timeout = setTimeout(function () {
-                         $('#DisplayNo1').text("验证失败: 超时").removeClass("label-success").addClass("label-danger");
-                         IdentifyNo1 = false;
-                         AuthNameNo1 = '';
-                     },10000);
-                     }
+        <div align="center">
+		<video id="video" width="200px" height="200px" autoplay="autoplay"></video>
+		<canvas id="canvas" width="200px" height="200px"></canvas>
+        </div>
+        <div align = "center">
+	    <input  type="submit" value="摄像头" onclick="getMedia()" />
+	    <input type="submit"  value="拍  照" onclick="takePhoto()" />
 
-                    LoginSys(IdentifyNo1 ,AuthNameNo1, IdentifyNo2,AuthNameNo2);
-                }
-                else{
-                    $('#DisplayNo1').text("验证失败: "+displayList.AuthName).removeClass("label-success").addClass("label-danger");
+	    <input type="submit" value="上  传" onclick="saveFile(filename);" />
+		<form method="post" action="{% url 'app01:create_order' product.id  %}">
+    		<input type="submit" value="     验  证     ">
+		</form>
+</div>
 
-                    IdentifyNo1 = false;
-                    AuthNameNo1 = '';
-                }
-            },
-            error:function () {
-               $('#DisplayNo1').text("验证失败: 未检测到人脸").removeClass("label-success").addClass("label-danger");
 
-                IdentifyNo1 = false;
-                AuthNameNo1 = '';
-            }
-            })
-        });
-</body>
-</html>
+
+
+	<script>
+        function getMedia() {
+            let constraints = {
+                video: {width: 200, height: 200},
+                audio: true
+            };
+            //获得video摄像头区域
+            let video = document.getElementById("video");
+            //这里介绍新的方法，返回一个 Promise对象
+            // 这个Promise对象返回成功后的回调函数带一个 MediaStream 对象作为其参数
+            // then()是Promise对象里的方法
+            // then()方法是异步执行，当then()前的方法执行完后再执行then()内部的程序
+            // 避免数据没有获取到
+            let promise = navigator.mediaDevices.getUserMedia(constraints);
+            promise.then(function (MediaStream) {
+                video.srcObject = MediaStream;
+                video.play();
+            });
+        }
+
+      function takePhoto() {
+      //获得Canvas对象
+      let video = document.getElementById("video");
+      let canvas = document.getElementById("canvas");
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, 200, 200);
+      }
+      //下面的代码是保存canvas标签里的图片并且将其按一定的规则重命名
+	var type = 'jpg';
+
+	var _fixType = function(type) {
+    type = type.toLowerCase().replace(/png/i, 'jpeg');
+    var r = type.match(/jpg|jpeg|bmp|gif/)[0];
+    return 'image/' + r;
+};
+/**
+ * @param  {String} filename 文件名
+ */
+	var saveFile = function(filename){
+	//获取canvas标签里的图片内容
+	var imgData = document.getElementById('canvas').toDataURL(type);
+	imgData = imgData.replace(_fixType(type),'image/octet-stream');
+
+    var save_link = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+    save_link.href = imgData;
+    save_link.download = filename;
+
+    var event = document.createEvent('MouseEvents');
+    event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    save_link.dispatchEvent(event);
+};
+
+// 下载后的文件名规则
+	var filename = (new Date()).getTime() + '.' + type;
+
+</script>
+
+{% endblock %}
